@@ -1,0 +1,153 @@
+﻿@model ShippingInfo
+@{
+    ViewData["Title"] = "Shipping";
+}
+
+<link rel="stylesheet" href="~/css/navbar_style.css" />
+<link rel="stylesheet" href="~/css/final_shipping.css" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gabarito&display=swap" rel="stylesheet">
+<!-- Font Awesome for Icons -->
+<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+
+<form asp-action="shipping" asp-controller="Cart" method="post" class="container">
+    <input asp-for="UserId" value="@Model.UserId" hidden />
+    <input asp-for="Added" value="@Model.Added" hidden />
+
+    <div class="step-indicator">
+        <div class="step"><i class="fas fa-map-marker-alt"></i> Step 1<br />Address</div>
+        <div class="step active"><i class="fas fa-truck"></i> Step 2<br />Shipping</div>
+        <div class="step"><i class="fas fa-credit-card"></i> Step 3<br />Payment</div>
+    </div>
+
+    <div class="shipment-method">
+        <h2>Shipment Method</h2>
+
+        <!-- Free -->
+        <label class="shipment-option">
+            <input asp-for="Method" type="radio" value="free" checked />
+            <span>Free Regular shipment</span><span id="freeDateLabel">…</span>
+        </label>
+
+        <!-- Express -->
+        <label class="shipment-option">
+            <input asp-for="Method" type="radio" value="express" />
+            <span>$8.50 Express shipment</span> <span id="expressDateLabel">…</span>
+        </label>
+
+        <!-- Schedule -->
+        <label class="shipment-option" style="align-content:center">
+            <input asp-for="Method" type="radio" value="schedule" />
+            <span>Schedule — pick your date</span>
+            <div class="date-picker-container" style="display:none;">
+                <input asp-for="Date"
+                       type="date"
+                       id="deliveryDate"
+                       class="date-picker"
+                       disabled />
+            </div>
+        </label>
+
+        <!-- Hidden Cost -->
+        <input asp-for="Cost" type="text" hidden id="shippingCost" />
+    </div>
+
+    <div class="buttons">
+        <a asp-action="CheckOutView" asp-controller="Cart" class="btn btn-back">Back</a>
+        <button type="submit" class="btn btn-next">Next</button>
+    </div>
+</form>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const today       = new Date();
+    const freeDate    = new Date(today);    freeDate.setDate(today.getDate() + 7);
+    const expressDate = new Date(today);    expressDate.setDate(today.getDate() + 2);
+    const fmt = d => d.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+
+    // Labels
+    document.getElementById('freeDateLabel').textContent    = `arrives ${fmt(freeDate)}`;
+    document.getElementById('expressDateLabel').textContent = `arrives ${fmt(expressDate)}`;
+
+    // Elements
+    const picker     = document.getElementById('deliveryDate');
+    const container  = picker.closest('.date-picker-container');
+    const hiddenCost = document.getElementById('shippingCost');
+    const hiddenDate = document.getElementById('shippingDate');
+
+    // Enforce min for schedule (today + 3)
+    const minSched = new Date(today);
+    minSched.setDate(today.getDate() + 3);
+    picker.min = minSched.toISOString().split('T')[0];
+
+    function updateHidden(method) {
+    // Utility to write hidden fields
+        let cost, shipDate;
+
+        if (method === 'free') 
+        {
+            cost     = 0;
+            shipDate = freeDate;
+            console.log({ method, shipDate, iso: shipDate.toISOString() });
+
+        }
+        else if (method === 'express') 
+        {
+            cost     = 8.50;
+            shipDate = expressDate;
+            console.log({ method, shipDate, iso: shipDate.toISOString() });
+
+        }
+        else 
+        { // schedule
+            // if no valid value, leave hiddenDate blank so model binder fails
+            if (!picker.value) 
+            {
+                hiddenDate.value = '';
+                hiddenCost.value = '';
+                return;
+            }
+
+            cost     = 5.00;
+            shipDate = new Date(picker.value);
+
+
+        }
+
+        hiddenCost.value = cost.toFixed(2);
+        // iso-date (yyyy-mm-dd) so binder parses correctly
+        hiddenDate.value = shipDate;
+
+        console.log({ method, shipDate, iso: shipDate.toISOString() });
+
+    }
+
+    // On radio change: show/hide UI + update hidden
+    document.querySelectorAll('input[name="Method"]').forEach(radio => {
+        radio.addEventListener('change', () => {
+            if (radio.value === 'schedule') {
+                container.style.display = 'block';
+                picker.disabled = false;
+            } else {
+                container.style.display = 'none';
+                picker.disabled = true;
+                picker.value = '';         // clear any old date
+            }
+            updateHidden(radio.value);
+        });
+    });
+
+    // Also update hidden on picker change (in case user picks a date)
+    picker.addEventListener('change', () => {
+        const method = document.querySelector('input[name="Method"]:checked').value;
+        if (method === 'schedule') updateHidden('schedule');
+    });
+
+    // Initialize hidden values on load
+    const initMethod = document.querySelector('input[name="Method"]:checked').value;
+    updateHidden(initMethod);
+});
+</script>

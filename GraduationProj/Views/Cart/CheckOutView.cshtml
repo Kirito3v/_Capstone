@@ -1,0 +1,142 @@
+﻿@model Address
+
+@{
+}
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gabarito&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+
+<div class="container">
+    <div class="step-indicator">
+        <div class="step active">
+            <i class="fas fa-map-marker-alt"></i> Step 1<br />Address
+        </div>
+        <div class="step">
+            <i class="fas fa-truck"></i> Step 2<br />Shipping
+        </div>
+        <div class="step">
+            <i class="fas fa-credit-card"></i> Step 3<br />Payment
+        </div>
+    </div>
+
+    <div class="address-container">
+        <h2>Enter Shipping Address</h2>
+
+        <form asp-action="CheckOutView" asp-controller="Cart" method="post">
+            @Html.AntiForgeryToken()
+            <input asp-for="Id" class="form-control"  hidden/>
+
+            <div class="form-group">
+                <label asp-for="FullName"></label>
+                <input asp-for="FullName" class="form-control" />
+                <span asp-validation-for="FullName" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="StreetAdress"></label>
+                <input asp-for="StreetAdress" class="form-control" />
+                <span asp-validation-for="StreetAdress" class="text-danger"></span>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label asp-for="City"></label>
+                    <input asp-for="City" class="form-control" />
+                    <span asp-validation-for="City" class="text-danger"></span>
+                </div>
+                <div class="form-group col-md-6">
+                    <label asp-for="PostalCode"></label>
+                    <input asp-for="PostalCode" class="form-control" />
+                    <span asp-validation-for="PostalCode" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Country"></label>
+                <input asp-for="Country" class="form-control" />
+                <span asp-validation-for="Country" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Phone"></label>
+                <input asp-for="Phone" class="form-control" />
+                <span asp-validation-for="Phone" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="AddressType"></label>
+                <select asp-for="AddressType" class="form-control">
+                    <option value="home">Home</option>
+                    <option value="office">Office</option>
+                    <option value="other">Other</option>
+                </select>
+                <span asp-validation-for="AddressType" class="text-danger"></span>
+            </div>
+            <div class="buttons">
+                <a asp-action="Cart" asp-controller="Products" class="btn btn-secondary">Back</a>
+                <button type="submit" class="btn btn-primary">Next</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+<script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const addressForm = document.getElementById('addressForm');
+            const nextButton = document.querySelector('.btn-next');
+
+            nextButton.addEventListener('click', function(e) {
+                e.preventDefault();
+
+                if (!addressForm.checkValidity()) {
+                    addressForm.reportValidity();
+                    return;
+                }
+
+                const addressData = {
+                    fullName: document.getElementById('fullName').value,
+                    streetAddress: document.getElementById('streetAddress').value,
+                    city: document.getElementById('city').value,
+                    zipCode: document.getElementById('zipCode').value,
+                    country: document.getElementById('country').value,
+                    phone: document.getElementById('phone').value,
+                    addressType: document.getElementById('addressType').value
+                };
+
+                const formattedAddress = `${addressData.streetAddress}, ${addressData.city}, ${addressData.zipCode}, ${addressData.country}`;
+                localStorage.setItem('shippingAddress', formattedAddress);
+
+                if (document.getElementById('saveAddress').checked) {
+                    let savedAddresses = JSON.parse(localStorage.getItem('savedAddresses')) || [];
+                    savedAddresses.push(addressData);
+                    localStorage.setItem('savedAddresses', JSON.stringify(savedAddresses));
+                }
+
+            window.location.href = '/Cart/shipping';
+            });
+        });
+
+        const toggle = document.getElementById('menu-toggle');
+    const navLinks = document.getElementById('nav-links');
+
+    toggle.addEventListener('click', () => {
+      navLinks.classList.toggle('active');
+    });
+
+    // Close menu on link click (mobile)
+    document.querySelectorAll('.nav-links a').forEach(link => {
+      link.addEventListener('click', () => {
+        navLinks.classList.remove('active');
+      });
+    });
+</script>
+
+
+<link rel="stylesheet" href="~/css/navbar_style.css">
+
+<link rel="stylesheet" href="~/css/final_address.css">

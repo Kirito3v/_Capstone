@@ -1,0 +1,85 @@
+﻿@model List<ProductViewModel>
+@{
+    ViewData["Title"] = "Wishlist";
+    Layout = "_Layout";
+}
+
+<link rel="stylesheet" href="~/css/navbar_style.css">
+<link rel="stylesheet" href="~/css/final_products.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gabarito&display=swap" rel="stylesheet">
+<!-- Font Awesome for Icons -->
+<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+
+
+
+
+<div class="container">
+
+    <main class="products align-content-center">
+        <div class="product-list">
+            <!-- Products -->
+            @if (Model != null)
+                @foreach (var product in Model)
+                {
+                    <div class="product-item">
+                        <div class="product-header">
+                            <img src="@product.ImageFileName" alt="@product.Name">
+                            <div 
+                              class="favorite-icon" 
+                              data-product-id="@product.Id" 
+                              aria-label="Toggle wishlist">
+                              <i class="@(product.IsInWishlist ? "fas fa-heart" : "far fa-heart")"></i>
+                            </div>
+                        </div>
+                        <h2>@product.Name</h2>
+                        <p class="price">$@product.Price</p>
+                        <a asp-controller="Products" asp-action="ProductDetailsView" asp-route-product_id="@product.Id">Buy Now</a>
+                    </div>
+                }
+        </div>
+    </main>
+</div>
+<script>
+    document.querySelectorAll('.favorite-icon').forEach(el => {
+      el.addEventListener('click', event => {
+        event.preventDefault();
+        const productId = el.dataset.productId;
+        const data = new FormData();
+        data.append('id', productId);
+
+        // Send toggle request reliably on page exit or immediate
+        navigator.sendBeacon('/Products/ToggleWishlist', data);  // :contentReference[oaicite:5]{index=5}
+
+        // Optionally update UI immediately
+        const icon = el.querySelector('i');
+        icon.classList.toggle('far');
+        icon.classList.toggle('fas');
+
+        if(icon.classList.contains('far'))
+        {
+            const parentDiv = el.closest('div.product-item');
+            parentDiv.remove();
+        }
+            
+      });
+    });
+
+</script>
+<script>
+    const toggle = document.getElementById('menu-toggle');
+    const navLinks = document.getElementById('nav-links');
+
+    toggle.addEventListener('click', () => {
+        navLinks.classList.toggle('active');
+    });
+
+    // Close menu on link click (mobile)
+    document.querySelectorAll('.nav-links a').forEach(link => {
+        link.addEventListener('click', () => {
+            navLinks.classList.remove('active');
+        });
+    });
+</script>

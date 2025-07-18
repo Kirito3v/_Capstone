@@ -1,0 +1,119 @@
+﻿@model PaymentInfoView
+@{
+}
+
+<script>
+  document.documentElement.setAttribute('data-bs-theme', 'light');
+</script>
+
+
+<link rel="stylesheet" href="~/css/navbar_style.css">
+<link rel="stylesheet" href="/css/final_payment.css">
+
+
+
+
+<!-- Main Content -->
+<div class="container">
+    <!-- Summary Section -->
+    <div class="summary">
+        <h2>Summary</h2>
+        <div id="cart-items-container">
+
+            @foreach(var ci in Model.CartItems)
+            {
+                <div class="summary-item">
+                    <div class="product-image">
+                        <img src="@($"../images/{ci.Product.Name}.png")" alt="@ci.Product.Name">
+                    </div>
+                    <span>@ci.Product.Name *@ci.Quantity</span>
+                    <span class="price">$@(((float)ci.Product.Price * ci.Quantity).ToString())</span>
+                </div>
+            }
+        </div>
+
+        <div class="order-summary">
+            <div class="section">
+                <h3>Address</h3>
+                <p id="shipping-address">@Model.address.StreetAdress @Model.address.City  @Model.address.Country</p>
+            </div>
+            <div class="section">
+                <h3>Shipment Method</h3>
+                <p id="shipping-method">@Model.shippingInfo.Method $@Model.shippingInfo.Cost</p>
+            </div>
+            <div class="section">
+                <p>Subtotal <span class="price" id="subtotal">$@Model.SupTotal</span></p>
+                <p>Shipping <span class="price" id="shipping-cost">$@Model.shippingInfo.Cost</span></p>
+                <p>Estimated Tax <span class="price" id="tax">$@Model.Tax</span></p>
+            </div>
+            <div class="section total">
+                <p>Total <span class="price" id="total">$@Model.Total</span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Section -->
+    <div class="payment">
+        <h2>Payment</h2>
+        <h3><strong><u>Credit Card</u></strong></h3>
+        <div class="card">
+            <img src="../images/visa.png" alt="Visa Card">
+        </div>
+
+        <form id="myForm">
+            <label for="cardholder-name">Cardholder Name</label>
+            <input type="text" id="cardholder-name" placeholder="Cardholder Name" aria-label="Cardholder Name" required>
+
+            <label for="card-number">Card Number</label>
+            <input type="text" id="card-number" placeholder="Card Number" aria-label="Card Number" required pattern="\d{16}">
+
+            <div class="form-row">
+                <div>
+                    <label for="exp-date">Expiration Date</label>
+                    <input type="text" id="exp-date" placeholder="MM/YY" aria-label="Expiration Date" required>
+                </div>
+                <div>
+                    <label for="cvv">CVV</label>
+                    <input type="text" id="cvv" placeholder="CVV" aria-label="CVV" required pattern="\d{3}">
+                </div>
+            </div>
+            <div class="actions">
+                <a asp-action="shipping" asp-controller="Cart">
+                    <button class="back">Back</button>
+                </a>
+                <button  class="pay">Pay</button>
+                <p id="confirmationMessage" style="display: none; color: rgb(0, 0, 0); font-weight: bold; margin-top: 10px;">
+                    👌 Ordered Successfully! You will receive an email with your order details.
+                </p>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+
+<script>
+
+    
+    function showMessage() {
+        document.getElementById("confirmationMessage").style.display = "block";
+
+        navigator.sendBeacon('/Cart/Empty');
+
+        setTimeout(() => {
+            window.location.href = '@Url.Action("Index", "Home")';
+        }, 2000);
+        
+    }
+
+    
+    document.getElementById("myForm").addEventListener("submit",function (e) 
+    {
+        e.preventDefault();
+        showMessage();
+    });
+
+</script>
+
+
+

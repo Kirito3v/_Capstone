@@ -1,0 +1,173 @@
+﻿@model List<CartProductView>
+@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gabarito&display=swap" rel="stylesheet">
+<!-- Font Awesome for Icons -->
+<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+<link rel="stylesheet" href="~/css/navbar_style.css">
+<link rel="stylesheet" href="~/css/final_products.css">
+<link rel="stylesheet" href="~/css/final_cart.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<main class="container">
+    <section class="cart">
+        <p>Shopping Cart</p>
+
+        @foreach (var CartItem in Model)
+        {
+            <div class="cart-item" id="@("product"+CartItem.ProductID)">
+                <img src="@CartItem.ImageFileName" alt="$@CartItem.Name">
+                <div class="item-details">
+                    <h3>@CartItem.Name</h3>
+                </div>
+                <div class="quantity" >
+                    <button class="DecItemButton" data-cart-id="@CartItem.Id" data-product-id="@CartItem.ProductID" data-quantity="-1">-</button>
+                    <span style="color: black;" id="@("quantity"+CartItem.ProductID)">@CartItem.Quantity</span>
+
+                    <button class="IncItemButton" data-cart-id="@CartItem.Id" data-product-id="@CartItem.ProductID" data-quantity="1">+</button>
+                </div>
+                <div class="price" id="@("price"+CartItem.ProductID)">$@(((decimal)CartItem.Quantity * CartItem.Price).ToString("0.00"))</div>
+                <button class="remove" style="background-color: Transparent;  border: none;" data-cart-id="@CartItem.Id" data-product-id="@CartItem.ProductID" data-quantity="@(CartItem.Quantity * -1)">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+        }
+
+    </section>
+
+    <section class="order-summary">
+        <h2>Order Summary</h2>
+        @using (null)
+        {
+            float total = Model.Sum(prop => (float)prop.Price * prop.Quantity);  
+
+        <div class="summary-container">
+            <div class="summary-row">
+                <span class="label">Subtotal</span>
+
+                    <span class="value" id="subtotal">$@(total.ToString("0.00"))</span>
+            </div>
+            <div class="summary-row">
+                <span class="label">Estimated Tax</span>
+                    <span class="value" id="tax">$@((total * 0.05).ToString("0.00"))</span>
+            </div>
+            <div class="summary-row">
+                <span class="label">Estimated shipping & Handling</span>
+                    <span class="value" id="shipping">$@((total * 0.01).ToString("0.00"))</span>
+            </div>
+            <div class="summary-row total-row">
+                <span class="label">Total</span>
+                    <span class="value" id="total">$@((total * 1.06).ToString("0.00"))</span>
+            </div>
+        </div>
+        }
+        <form action="/Cart/CheckOutView">
+            <button type="submit" class="checkout" href="Cart/CheckOutView">
+                checkout
+            </button>
+        </form>
+    </section>
+</main>
+
+<script>
+    function updateSummary(cartId, productId) {
+
+
+        $.ajax({
+            url: '@Url.Action("UpdateCartQuantity", "Updater")',
+            type: 'POST',
+            data: { productId: productId, cartId: cartId },
+            success: function (response) {
+
+
+                if (response.success) {
+                    
+                    if (response.newQuantity > 0) {
+                        $('#quantity' + productId).text(response.newQuantity);
+                        $('#price' + productId).text('$' + response.newTotalPrice.toFixed(2));
+                    }
+                }else{
+                    $('#product' + productId).remove();
+
+                }
+            }
+        });
+
+
+        $.ajax({
+            url: '@Url.Action("GetUpdatedSummary", "Updater")', 
+            type: 'GET',
+            data: { cartId: cartId },
+            success: function (data) {
+                if (data.success) {
+
+                    $('#subtotal').text('$' + (data.subtotal).toFixed(2));
+                    $('#tax').text('$' + (data.tax).toFixed(2));
+                    $('#shipping').text('$' + (data.shipping).toFixed(2));
+                    $('#total').text('$' + (data.total).toFixed(2));
+                }
+            },
+            error: function (err) {
+                console.error('Error fetching summary:', err);
+            }
+        });
+    }
+</script>
+
+<script>
+    const incItemButtons = document.querySelectorAll(".IncItemButton");
+    const decItemButtons = document.querySelectorAll(".DecItemButton");
+    const removebtn = document.querySelectorAll(".remove");
+
+    const meth = async (event) => {
+        const btn = event.currentTarget;
+        const cart_id = btn.dataset.cartId;
+        const product_id = btn.dataset.productId;
+        const quantity = btn.dataset.quantity;
+
+        const form = new FormData();
+        form.append('CartId', cart_id);
+        form.append('ProductId', product_id);
+        form.append('Quantity', quantity);
+
+        const res = await fetch('/Cart/AddItem', {
+            method: 'POST',
+            body: form
+        });
+
+        const contentType = res.headers.get('Content-Type') || '';
+        const payload = contentType.includes('application/json')
+            ? await res.json()
+            : { success: false, message: 'Unexpected response type' };
+
+        if (payload.success) {
+            updateSummary(cart_id, product_id);
+        } else {
+            alert("Failed: " + (payload.message || 'Unknown error'));
+        }
+    };
+
+    incItemButtons.forEach(button => {
+        button.addEventListener('click', meth);
+    });
+
+    decItemButtons.forEach(button => {
+        button.addEventListener('click', meth);
+    });
+
+    removebtn.forEach(button => {
+        button.addEventListener('click', meth);
+    });
+
+
+
+
+</script>
